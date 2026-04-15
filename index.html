@@ -493,7 +493,7 @@ input:focus{border-color:var(--green)}
     <div class="fr">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <label class="fl" style="margin:0">주휴수당 단가 (원)</label>
-        <button type="button" onclick="openHoliCalc()" style="background:var(--amb);border:none;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">🧮 계산기</button>
+        <button type="button" onclick="openHoliCalc()" style="background:var(--amb);border:none;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">🧮 주휴수당 계산기</button>
       </div>
       <input type="number" id="empHoliRate" placeholder="41280" value="41280">
     </div>
@@ -537,7 +537,7 @@ input:focus{border-color:var(--green)}
 
       <!-- 카드 헤더 -->
       <div id="psCardHdr" style="background:var(--green);padding:20px 18px 16px;position:relative">
-        <div style="font-size:11px;color:rgba(255,255,255,0.75);margin-bottom:4px">☕ ZUO · 급여 명세서</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.75);margin-bottom:4px" id="psCafeName">☕ 카페 · 급여 명세서</div>
         <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:2px" id="psName">이름</div>
         <div style="font-size:13px;color:rgba(255,255,255,0.85)" id="psPeriod">2026년 4월 급여 명세서</div>
         <div style="position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:44px;opacity:0.18">💰</div>
@@ -627,11 +627,11 @@ input:focus{border-color:var(--green)}
     <!-- 버튼들 -->
     <div style="display:flex;gap:8px;margin-bottom:6px">
       <button class="fcnl" style="flex:1" onclick="savePayslip()">💾 저장</button>
-      <button style="flex:2;padding:11px;border-radius:8px;border:none;background:#FEE500;color:#3C1E1E;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px" onclick="captureAndShare()">
-        📸 이미지로 카톡 공유
+      <button style="flex:2;padding:11px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px" onclick="captureAndShare()">
+        📥 급여명세서 이미지 저장
       </button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--t3);line-height:1.6">이미지 저장 후 카카오톡에서 파일 첨부로 공유하세요</div>
+    <div style="text-align:center;font-size:11px;color:var(--t3);line-height:1.6">이미지 저장 후 카카오톡 파일첨부(+)로 전송하세요</div>
   </div>
 </div>
 
@@ -896,7 +896,7 @@ const db=firebase.firestore();
 const DAYS=["일","월","화","수","목","금","토"];
 const MONTHS=["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
 const RECOVER_CODE="duo1234";
-const APP_URL="https://heroic-meerkat-3d384.netlify.app";
+const APP_URL="https://radinotech-beep.github.io/zuo-cafe";
 const MASTER_PW="0000";
 
 let ADMIN_PW=localStorage.getItem('adminPw')||"admin1234";
@@ -1227,6 +1227,12 @@ function confirmTime(){
 }
 
 // 공유
+function showToast(msg){
+  let t=document.getElementById('toastMsg');
+  if(!t){t=document.createElement('div');t.id='toastMsg';t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.78);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap;pointer-events:none;transition:opacity 0.4s';document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';
+  clearTimeout(t._timer);t._timer=setTimeout(()=>t.style.opacity='0',2500);
+}
 function showShare(txt){document.getElementById('shTxt').textContent=txt;document.getElementById('shBanner').style.display='block';}
 function closeShare(){document.getElementById('shBanner').style.display='none';}
 async function doCopy(){
@@ -1467,14 +1473,14 @@ function setupEmpEdit(id){
   document.getElementById('empBank').value=emp.bank||'';
   document.getElementById('empAcct').value=emp.acct||'';
   document.getElementById('empRate').value=emp.rate||10320;
-  document.getElementById('empHoliRate').value=emp.holidayRate||41280;
+  document.getElementById('empHoliRate').value=(emp.holidayRate!==undefined&&emp.holidayRate!==null)?emp.holidayRate:41280;
   document.getElementById('empPw').value='';
   showScreen('scEmpAdd');
 }
 async function saveEmp(){
   const name=document.getElementById('empName').value.trim();
   if(!name){alert('이름을 입력해주세요');return;}
-  const data={cafeId:currentCafe.id,name,phone:document.getElementById('empPhone').value.trim(),addr:document.getElementById('empAddr').value.trim(),bank:document.getElementById('empBank').value.trim(),acct:document.getElementById('empAcct').value.trim(),rate:parseInt(document.getElementById('empRate').value)||10320,holidayRate:parseInt(document.getElementById('empHoliRate').value)||41280};
+  const data={cafeId:currentCafe.id,name,phone:document.getElementById('empPhone').value.trim(),addr:document.getElementById('empAddr').value.trim(),bank:document.getElementById('empBank').value.trim(),acct:document.getElementById('empAcct').value.trim(),rate:parseInt(document.getElementById('empRate').value)||10320,holidayRate:document.getElementById('empHoliRate').value===''?41280:parseInt(document.getElementById('empHoliRate').value)};
   const pw=document.getElementById('empPw').value.trim();
   if(pw)data.password=pw;
   if(editingEmpId){await db.collection('employees').doc(editingEmpId).update(data);}
@@ -1505,6 +1511,7 @@ async function openPayslip(empId){
   let total=0;snap.forEach(d=>total+=d.data().hours||0);
   const base=Math.round(total*(emp.rate||0));
   psHoliRateVal=emp.holidayRate||0;psWeekCntVal=4;
+  document.getElementById('psCafeName').textContent=`☕ ${currentCafe.name} · 급여 명세서`;
   document.getElementById('psName').textContent=emp.name;
   document.getElementById('psPeriod').textContent=`${payY}년 ${payM+1}월 급여 명세서`;
   document.getElementById('psHours').textContent=total.toFixed(1)+'시간';
@@ -1585,14 +1592,14 @@ async function captureAndShare(){
     link.click();
     // 안내 배너
     setTimeout(()=>{
-      showShare(`📸 급여 명세서 이미지가 저장됐어요!\n\n👉 카카오톡 채팅방 → 파일첨부(+) → 갤러리에서 방금 저장한 이미지를 선택해서 보내주세요 😊\n\n수신자: ${name} 님`);
+      setTimeout(()=>{ showToast('📥 급여명세서 이미지가 저장됐어요!'); },200);
     },200);
   } catch(e){
     restoreCapture();
     alert('캡처에 실패했어요. 다시 시도해주세요.');
     console.error(e);
   }
-  btn.disabled=false;btn.innerHTML='📸 이미지로 카톡 공유';
+  btn.disabled=false;btn.innerHTML='📥 급여명세서 이미지 저장';
 }
 
 // 월 급여 테이블
